@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the key_node module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function key_node_install() {
+  // Set Site API Key configuration variable.
+  \Drupal::configFactory()
+    ->getEditable('system.site')
+    ->set('siteapikey', 'No API Key yet')
+    ->save();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function key_node_uninstall() {
+  // Remove Site API Key configuration variable.
+  \Drupal::configFactory()
+    ->getEditable('system.site')
+    ->clear('siteapikey')
+    ->save();
+}

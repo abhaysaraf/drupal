@@ -1,0 +1,12 @@
+key_node.node_json_content:
+  path: '/page_json/{api_key}/{node}'
+  defaults:
+    _title: 'Page Node JSON Content'
+    _controller: '\Drupal\key_node\Controller\KeyNodeController::jsonContent'
+  requirements:
+    _permission: 'access content'
+    node: \d+
+  options:
+    parameters:
+      node:
+        type: entity:node

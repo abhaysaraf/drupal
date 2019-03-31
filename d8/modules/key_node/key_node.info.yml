@@ -1,0 +1,8 @@
+name: Key Node (Axelerant)
+description: Retrieves node details in JSON with specified site API-key.
+package: Axelerant
+type: module
+core: 8.x
+configure: system.site_information_settings
+dependencies:
+  - drupal:node

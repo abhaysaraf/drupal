@@ -1,0 +1,88 @@
+<?php
+
+/**
+ * @file
+ * Custom module that retrieves node details with specified site API-key.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function key_node_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.key_node':
+      $output = '';
+      $output .= '<h3>' . t('Introduction') . '</h3>';
+      $output .= '<p>' . t('This module responds JSON node content upon passing valid System API key.') . '</p>';
+      $output .= '<h3>' . t('Configuration') . '</h3>';
+      $output .= '<p>' . t('To configure find configuration link of this module on <a href=":module_list">module list</a> page or use direct link <a href=":site_information">admin/config/system/site-information</a>.', [':module_list' => \Drupal::url('system.modules_list'), ':site_information' => \Drupal::url('system.site_information_settings')]) . '</p>';
+      $output .= '<p>' . t('Upon landing on "Basic site settings" page, enter a valid Site API Key of your choice and update the page configuration.') . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<p>' . t('Retrieve node contents in JSON format with route URL pattern "page_json/{api_key}/{node}".') . '</p>';
+      $output .= '<p>' . t('Where, {api_key} should match the configured Site API Key, and {node} should be the Node ID of any Page Node(Restricted).') . '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alters the system information settings form to allow site api-key settings.
+ */
+function key_node_form_system_site_information_settings_alter(&$form, FormStateInterface $form_state, $form_id) {
+  // Get configured Site API Key.
+  $site_api_key = \Drupal::config('system.site')->get('siteapikey');
+
+  // Add Site API Key field to the form.
+  $form['site_information']['site_api_key'] = [
+    '#type' => 'textfield',
+    '#title' => t('Site API Key'),
+    '#description' => t('Set valid API-Key to access node details.'),
+    '#default_value' => $site_api_key,
+    '#element_validate' => ['_key_node_validate_api_key'],
+  ];
+
+  // Adding new submit handler.
+  $form['#submit'][] = '_key_node_submit_api_key';
+
+  // Altering save configuration button value.
+  $form['actions']['submit']['#value'] = t('Update Configuration');
+}
+
+/**
+ * Element validation handler for element 'site_api_key'.
+ *
+ * @see key_node_form_system_site_information_settings_alter()
+ */
+function _key_node_validate_api_key($element, FormStateInterface $form_state, array $form) {
+  $submitted = $element['#value'];
+
+  // Trim spaces.
+  // Considering spaces are allowed, as variable 'siteapikey' contains spaces.
+  $trimmed_val = str_replace(" ", "", $submitted);
+
+  // Validate if entered API key could be recognized as a proper URL path.
+  if (!$submitted || !$trimmed_val || (urlencode($trimmed_val) !== $trimmed_val)) {
+    $form_state->setError($element, t('Please enter valid API key, provided key %key shall not be recognized as a proper URL path.', ['%key' => $submitted]));
+  }
+}
+
+/**
+ * Additional form submission handler for system_site_information_settings().
+ *
+ * @see key_node_form_system_site_information_settings_alter()
+ */
+function _key_node_submit_api_key($form, FormStateInterface $form_state) {
+  $submitted = $form_state->getValues();
+
+  // Set the variable siteapikey.
+  \Drupal::configFactory()
+    ->getEditable('system.site')
+    ->set('siteapikey', $submitted['site_api_key'])
+    ->save();
+
+  drupal_set_message(t('Site API Key as %site_api_key has been saved.', ['%site_api_key' => $submitted['site_api_key']]));
+}
